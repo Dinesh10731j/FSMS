@@ -1,4 +1,4 @@
-import { View,Text } from "lucide-react-native";
+import { View,Text } from "react-native";
 
 export const InventoryScreen = () => {
   return (

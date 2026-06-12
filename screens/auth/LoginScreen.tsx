@@ -4,6 +4,7 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../types/navigation";
 import { Image } from "react-native";
+import { Controller } from "react-hook-form"
 import {
   View,
   Text,
@@ -23,6 +24,7 @@ import {
 
 
 
+
 type LoginScreenNavigationProp =
   NativeStackNavigationProp<
     RootStackParamList,
@@ -30,6 +32,9 @@ type LoginScreenNavigationProp =
   >;
 export default function LoginScreen() {
   const [passwordVisible, setPasswordVisible] = useState(false);
+
+
+
 
 
 
@@ -45,7 +50,7 @@ export default function LoginScreen() {
         />
 
         <Text style={styles.title}>
-          Sitapaila FSM
+          Sitapaila FSMS
         </Text>
 
         <Text style={styles.subtitle}>
@@ -187,7 +192,7 @@ const styles = StyleSheet.create({
   logo: {
     width: 110,
     height: 110,
-    borderRadius:100,
+    borderRadius: 100,
     resizeMode: "contain",
     marginBottom: 10,
     boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
