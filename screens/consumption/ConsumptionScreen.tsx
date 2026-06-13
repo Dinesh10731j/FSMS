@@ -7,6 +7,7 @@ import {
   FlatList,
   Modal,
   ScrollView,
+  Alert,
 } from "react-native";
 
 import CurvedHeader from "../../components/ui/CurvedHeader";
@@ -14,6 +15,7 @@ import { ChevronDown, Send } from "lucide-react-native";
 
 import { CATEGORY_ICON, DATA, CONSUMPTION_TYPES } from "../../utils/itemsInfo";
 import { Input } from "../../components/ui/Input";
+import { isSerialAssignedToTechnician } from "../../utils/snAssignments";
 
 export const ConsumptionScreen = () => {
   const [category, setCategory] =
@@ -26,6 +28,9 @@ export const ConsumptionScreen = () => {
   const [customerId, setCustomerId] = useState("");
   const [ticketId, setTicketId] = useState("");
   const [remarks, setRemarks] = useState("");
+  const [serialNumber, setSerialNumber] = useState("");
+  const [technician, setTechnician] = useState("Ram");
+  const [validationMessage, setValidationMessage] = useState("");
 
   const [openCategory, setOpenCategory] = useState(false);
   const [openModel, setOpenModel] = useState(false);
@@ -34,9 +39,29 @@ export const ConsumptionScreen = () => {
   const models = useMemo(() => DATA[category], [category]);
 
   const CategoryIcon = CATEGORY_ICON[category];
+  const technicians = ["Ram", "Sita", "Kiran"];
 
   const handleSubmit = () => {
-    if (!customerId || !quantity) return;
+    if (!customerId || !quantity || !serialNumber.trim()) {
+      Alert.alert(
+        "Missing information",
+        "Customer ID, quantity and serial number are required."
+      );
+      return;
+    }
+
+    if (!isSerialAssignedToTechnician(serialNumber.trim(), technician)) {
+      setValidationMessage(
+        `Serial number ${serialNumber.trim().toUpperCase()} is not assigned to ${technician}.`
+      );
+      Alert.alert(
+        "SN validation failed",
+        `This serial number is not assigned to ${technician}.`
+      );
+      return;
+    }
+
+    setValidationMessage("");
 
     const payload = {
       category,
@@ -46,6 +71,8 @@ export const ConsumptionScreen = () => {
       ticketId,
       consumptionType,
       remarks,
+      serialNumber: serialNumber.trim().toUpperCase(),
+      technician,
       message: `${quantity} ${category} (${model}) used for ${consumptionType}`,
       time: new Date().toISOString(),
     };
@@ -56,6 +83,7 @@ export const ConsumptionScreen = () => {
     setCustomerId("");
     setTicketId("");
     setRemarks("");
+    setSerialNumber("");
   };
 
   return (
@@ -140,6 +168,40 @@ export const ConsumptionScreen = () => {
             value={ticketId}
             onChangeText={setTicketId}
           />
+
+          <Text style={styles.label}>Technician</Text>
+          <View style={styles.techRow}>
+            {technicians.map((name) => (
+              <TouchableOpacity
+                key={name}
+                style={[
+                  styles.techChip,
+                  technician === name && styles.techChipActive,
+                ]}
+                onPress={() => setTechnician(name)}
+              >
+                <Text
+                  style={
+                    technician === name
+                      ? styles.techChipTextActive
+                      : styles.techChipText
+                  }
+                >
+                  {name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Text style={styles.label}>Serial Number</Text>
+          <Input
+            placeholder="Enter serial number"
+            value={serialNumber}
+            onChangeText={setSerialNumber}
+          />
+          {validationMessage ? (
+            <Text style={styles.validationText}>{validationMessage}</Text>
+          ) : null}
 
           <Text style={styles.label}>Quantity</Text>
           <Input
@@ -290,6 +352,40 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: "#111827",
+  },
+
+  techRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginVertical: 8,
+  },
+
+  techChip: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    backgroundColor: "#F3F4F6",
+  },
+
+  techChipActive: {
+    backgroundColor: "#2563EB",
+  },
+
+  techChipText: {
+    color: "#0F172A",
+    fontWeight: "600",
+  },
+
+  techChipTextActive: {
+    color: "#fff",
+    fontWeight: "600",
+  },
+
+  validationText: {
+    marginTop: 6,
+    color: "#DC2626",
+    fontSize: 12,
   },
 
   btn: {

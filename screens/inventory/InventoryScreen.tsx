@@ -6,10 +6,12 @@ import {
   TextInput,
   StyleSheet,
   TouchableOpacity,
+  Modal,
 } from "react-native";
 
 import CurvedHeader from "../../components/ui/CurvedHeader";
 import AddStockModal from "./AddStockModal";
+import { assignSerial, getAssignmentsByCategory } from "../../utils/snAssignments";
 
 import {
   Wifi,
@@ -18,6 +20,7 @@ import {
   Radio,
   Search,
   Plus,
+  X,
 } from "lucide-react-native";
 
 /* ================= TYPES ================= */
@@ -36,6 +39,12 @@ type InventoryItem = {
 export const InventoryScreen = () => {
   const [selected, setSelected] = useState("All");
   const [modalVisible, setModalVisible] = useState(false);
+  const [assignModalVisible, setAssignModalVisible] = useState(false);
+  const [assignCategory, setAssignCategory] = useState<"Router" | "IPTV" | "Wire">("Router");
+  const [assignModel, setAssignModel] = useState("Single Band");
+  const [assignSerialValue, setAssignSerialValue] = useState("");
+  const [assignTech, setAssignTech] = useState("Ram");
+  const [assignMessage, setAssignMessage] = useState("");
 
   const [inventory, setInventory] = useState<InventoryItem[]>([
     {
@@ -94,6 +103,30 @@ export const InventoryScreen = () => {
     setInventory((prev) => [newItem, ...prev]);
   };
 
+  const handleAssignSerial = () => {
+    if (!assignSerialValue.trim()) {
+      setAssignMessage("Serial number is required.");
+      return;
+    }
+
+    const success = assignSerial(
+      assignSerialValue,
+      assignTech,
+      assignCategory,
+      assignModel
+    );
+
+    if (!success) {
+      setAssignMessage(
+        `Serial ${assignSerialValue.trim().toUpperCase()} is already assigned to another technician.`
+      );
+      return;
+    }
+
+    setAssignMessage("Serial assigned successfully.");
+    setAssignSerialValue("");
+  };
+
   const filtered =
     selected === "All"
       ? inventory
@@ -149,8 +182,8 @@ export const InventoryScreen = () => {
         {filtered.map((item, index) => {
           const Icon = item.icon;
           const percent = (item.used / item.total) * 100;
-          const remaining = item.total - item.used;
           const statusColor = getStatusColor(item.used, item.total);
+          const assignedCount = getAssignmentsByCategory(item.category).length;
 
           return (
             <View key={index} style={styles.card}>
@@ -200,10 +233,10 @@ export const InventoryScreen = () => {
 
                 <View style={styles.metricBox}>
                   <Text style={styles.metricLabel}>
-                    Remaining
+                    Assigned SNs
                   </Text>
                   <Text style={styles.metricValue}>
-                    {remaining}
+                    {assignedCount}
                   </Text>
                 </View>
               </View>
@@ -220,6 +253,18 @@ export const InventoryScreen = () => {
                   ]}
                 />
               </View>
+
+              <TouchableOpacity
+                style={styles.assignButton}
+                onPress={() => {
+                  setAssignCategory(item.category as any);
+                  setAssignModel(item.category === "Wire" ? "50" : item.name.split(" ")[1] || "Single Band");
+                  setAssignModalVisible(true);
+                  setAssignMessage("");
+                }}
+              >
+                <Text style={styles.assignButtonText}>Assign SN</Text>
+              </TouchableOpacity>
             </View>
           );
         })}
@@ -241,6 +286,62 @@ export const InventoryScreen = () => {
         onClose={() => setModalVisible(false)}
         onAdd={handleAddStock}
       />
+
+      <Modal visible={assignModalVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.assignModal}>
+            <TouchableOpacity
+              style={styles.modalClose}
+              onPress={() => setAssignModalVisible(false)}
+            >
+              <X size={20} />
+            </TouchableOpacity>
+
+            <Text style={styles.modalTitle}>Assign Serial Number</Text>
+            <Text style={styles.label}>Category</Text>
+            <Text style={styles.modalValue}>{assignCategory}</Text>
+
+            <Text style={styles.label}>Model / Type</Text>
+            <Text style={styles.modalValue}>{assignModel}</Text>
+
+            <Text style={styles.label}>Technician</Text>
+            <View style={styles.techRowSelect}>
+              {['Ram', 'Sita', 'Kiran'].map((name) => (
+                <TouchableOpacity
+                  key={name}
+                  style={[
+                    styles.techChip,
+                    assignTech === name && styles.techChipActive,
+                  ]}
+                  onPress={() => setAssignTech(name)}
+                >
+                  <Text
+                    style={assignTech === name ? styles.techChipTextActive : styles.techChipText}
+                  >
+                    {name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={styles.label}>Serial Number</Text>
+            <TextInput
+              placeholder="Enter serial number"
+              value={assignSerialValue}
+              onChangeText={setAssignSerialValue}
+              style={styles.input}
+            />
+
+            {assignMessage ? (
+              <Text style={styles.assignMessage}>{assignMessage}</Text>
+            ) : null}
+
+            <TouchableOpacity style={styles.assignButtonPrimary} onPress={handleAssignSerial}>
+              <Text style={styles.assignButtonText}>Save Assignment</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -334,6 +435,100 @@ const styles = StyleSheet.create({
   percent: {
     fontSize: 13,
     fontWeight: "800",
+  },
+
+  label: {
+    marginTop: 14,
+    fontSize: 12,
+    color: "#475569",
+    fontWeight: "700",
+  },
+
+  assignButton: {
+    marginTop: 14,
+    backgroundColor: "#2563EB",
+    paddingVertical: 12,
+    borderRadius: 14,
+    alignItems: "center",
+  },
+
+  assignButtonPrimary: {
+    marginTop: 14,
+    backgroundColor: "#2563EB",
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: "center",
+  },
+
+  assignButtonText: {
+    color: "#fff",
+    fontWeight: "700",
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.35)",
+    justifyContent: "center",
+    padding: 20,
+  },
+
+  assignModal: {
+    backgroundColor: "#fff",
+    borderRadius: 22,
+    padding: 20,
+  },
+
+  modalClose: {
+    alignSelf: "flex-end",
+    padding: 8,
+  },
+
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    marginBottom: 16,
+  },
+
+  modalValue: {
+    padding: 14,
+    borderRadius: 12,
+    backgroundColor: "#F3F4F6",
+    marginBottom: 12,
+    color: "#0F172A",
+  },
+
+  techRowSelect: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginBottom: 12,
+  },
+
+  techChip: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    backgroundColor: "#F3F4F6",
+  },
+
+  techChipActive: {
+    backgroundColor: "#2563EB",
+  },
+
+  techChipText: {
+    color: "#0F172A",
+    fontWeight: "600",
+  },
+
+  techChipTextActive: {
+    color: "#fff",
+    fontWeight: "600",
+  },
+
+  assignMessage: {
+    marginTop: 8,
+    color: "#DC2626",
+    fontSize: 12,
   },
 
   metrics: {

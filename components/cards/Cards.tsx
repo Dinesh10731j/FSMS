@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ViewStyle,
+  StyleProp,
 } from "react-native";
 
 type CardVariant = "default" | "outlined" | "elevated";
@@ -16,7 +17,7 @@ interface AppCardProps {
   variant?: CardVariant;
   onPress?: () => void;
   rightAction?: React.ReactNode;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 const AppCard: React.FC<AppCardProps> = ({
