@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,7 +7,10 @@ import {
   TouchableOpacity,
 } from "react-native";
 
+import { useNavigation, NavigationProp } from "@react-navigation/native";
+import { RootStackParamList } from "../../types/navigation";
 import CurvedHeader from "../../components/ui/CurvedHeader";
+
 import {
   User,
   Settings,
@@ -16,52 +19,117 @@ import {
   Wifi,
   Tv,
   Cable,
+  Clock,
 } from "lucide-react-native";
 
+/* ================= PROFILE SCREEN ================= */
+
 export const ProfileScreen = () => {
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+
+  const [attendance, setAttendance] = useState<
+    "offline" | "checked_in" | "checked_out"
+  >("offline");
+
+  const toggleAttendance = () => {
+    if (attendance === "offline") {
+      setAttendance("checked_in");
+    } else if (attendance === "checked_in") {
+      setAttendance("checked_out");
+    } else {
+      setAttendance("offline");
+    }
+  };
+
+  const getAttendanceColor = () => {
+    if (attendance === "checked_in") return "#16A34A";
+    if (attendance === "checked_out") return "#F59E0B";
+    return "#EF4444";
+  };
+
+  const getAttendanceText = () => {
+    if (attendance === "checked_in") return "Checked In";
+    if (attendance === "checked_out") return "Checked Out";
+    return "Offline";
+  };
+
   return (
     <View style={styles.container}>
       <CurvedHeader title="Profile" />
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* ================= USER CARD ================= */}
+        {/* ================= PROFILE CARD ================= */}
         <View style={styles.profileCard}>
           <View style={styles.avatar}>
             <User size={28} color="#2563EB" />
           </View>
 
           <Text style={styles.name}>Field Technician</Text>
-          <Text style={styles.role}>Active • Kathmandu Branch</Text>
+          <Text style={styles.role}>Kathmandu Branch</Text>
 
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>Online</Text>
-          </View>
+          {/* ================= ATTENDANCE BUTTON ================= */}
+          <TouchableOpacity
+            onPress={toggleAttendance}
+            style={[
+              styles.attendanceBadge,
+              { backgroundColor: getAttendanceColor() + "20" },
+            ]}
+          >
+            <Clock size={14} color={getAttendanceColor()} />
+            <Text
+              style={[
+                styles.attendanceText,
+                { color: getAttendanceColor() },
+              ]}
+            >
+              {getAttendanceText()}
+            </Text>
+          </TouchableOpacity>
+
+          <Text style={styles.tapHint}>
+            Tap to change attendance status
+          </Text>
         </View>
 
         {/* ================= STATS ================= */}
         <View style={styles.statsRow}>
-          <View style={styles.statBox}>
-            <ClipboardList size={18} color="#2563EB" />
-            <Text style={styles.statValue}>24</Text>
-            <Text style={styles.statLabel}>Tickets</Text>
+          <Stat icon={ClipboardList} label="Tickets" value="24" />
+          <Stat icon={Wifi} label="Router" value="18" color="#10B981" />
+          <Stat icon={Tv} label="IPTV" value="12" color="#F59E0B" />
+          <Stat icon={Cable} label="Wire" value="320m" color="#EF4444" />
+        </View>
+
+        {/* ================= ATTENDANCE SUMMARY CARD ================= */}
+        <View style={styles.attendanceCard}>
+          <Text style={styles.sectionTitle}>Today Activity</Text>
+
+          <View style={styles.row}>
+            <Text style={styles.label}>Status:</Text>
+            <Text
+              style={{ color: getAttendanceColor(), fontWeight: "700" }}
+            >
+              {getAttendanceText()}
+            </Text>
           </View>
 
-          <View style={styles.statBox}>
-            <Wifi size={18} color="#10B981" />
-            <Text style={styles.statValue}>18</Text>
-            <Text style={styles.statLabel}>Router</Text>
+          <View style={styles.row}>
+            <Text style={styles.label}>Check-in Time:</Text>
+            <Text style={styles.value}>
+              {attendance === "checked_in"
+                ? new Date().toLocaleTimeString()
+                : "--"}
+            </Text>
           </View>
 
-          <View style={styles.statBox}>
-            <Tv size={18} color="#F59E0B" />
-            <Text style={styles.statValue}>12</Text>
-            <Text style={styles.statLabel}>IPTV</Text>
-          </View>
-
-          <View style={styles.statBox}>
-            <Cable size={18} color="#EF4444" />
-            <Text style={styles.statValue}>320m</Text>
-            <Text style={styles.statLabel}>Wire</Text>
+          <View style={styles.row}>
+            <Text style={styles.label}>Work Status:</Text>
+            <Text style={styles.value}>
+              {attendance === "checked_in"
+                ? "Working"
+                : attendance === "checked_out"
+                ? "Completed"
+                : "Not Started"}
+            </Text>
           </View>
         </View>
 
@@ -69,8 +137,16 @@ export const ProfileScreen = () => {
         <View style={styles.menuCard}>
           <Text style={styles.sectionTitle}>Settings</Text>
 
-          <MenuItem icon={Settings} label="Account Settings" />
-          <MenuItem icon={ClipboardList} label="Work History" />
+          <MenuItem
+            icon={Settings}
+            label="Account Settings"
+            onPress={() => navigation.navigate("AccountSettings")}
+          />
+          <MenuItem
+            icon={ClipboardList}
+            label="Work History"
+            onPress={() => navigation.navigate("WorkHistory")}
+          />
           <MenuItem icon={LogOut} label="Logout" danger />
         </View>
       </ScrollView>
@@ -78,19 +154,28 @@ export const ProfileScreen = () => {
   );
 };
 
-/* ================= MENU COMPONENT ================= */
+/* ================= STAT COMPONENT ================= */
 
-const MenuItem = ({
+const Stat = ({
   icon: Icon,
   label,
-  danger,
-}: {
-  icon: any;
-  label: string;
-  danger?: boolean;
-}) => {
+  value,
+  color = "#2563EB",
+}: any) => {
   return (
-    <TouchableOpacity style={styles.menuItem}>
+    <View style={styles.statBox}>
+      <Icon size={18} color={color} />
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
+  );
+};
+
+/* ================= MENU ================= */
+
+const MenuItem = ({ icon: Icon, label, danger, onPress }: any) => {
+  return (
+    <TouchableOpacity style={styles.menuItem} onPress={onPress}>
       <Icon size={18} color={danger ? "#EF4444" : "#374151"} />
       <Text style={[styles.menuText, danger && { color: "#EF4444" }]}>
         {label}
@@ -137,18 +222,25 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
 
-  badge: {
-    marginTop: 10,
-    backgroundColor: "#DCFCE7",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+  attendanceBadge: {
+    marginTop: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
 
-  badgeText: {
-    fontSize: 11,
+  attendanceText: {
+    fontSize: 12,
     fontWeight: "700",
-    color: "#16A34A",
+  },
+
+  tapHint: {
+    fontSize: 10,
+    color: "#9CA3AF",
+    marginTop: 6,
   },
 
   statsRow: {
@@ -178,12 +270,12 @@ const styles = StyleSheet.create({
     color: "#6B7280",
   },
 
-  menuCard: {
+  attendanceCard: {
     backgroundColor: "#fff",
     margin: 16,
-    marginTop: 18,
+    marginTop: 14,
     borderRadius: 16,
-    padding: 12,
+    padding: 14,
   },
 
   sectionTitle: {
@@ -191,6 +283,30 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     marginBottom: 10,
     color: "#111827",
+  },
+
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginVertical: 6,
+  },
+
+  label: {
+    color: "#6B7280",
+    fontSize: 12,
+  },
+
+  value: {
+    fontWeight: "700",
+    fontSize: 12,
+  },
+
+  menuCard: {
+    backgroundColor: "#fff",
+    margin: 16,
+    marginTop: 18,
+    borderRadius: 16,
+    padding: 12,
   },
 
   menuItem: {

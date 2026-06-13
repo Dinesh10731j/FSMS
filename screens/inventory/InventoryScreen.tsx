@@ -16,7 +16,6 @@ import {
   Tv,
   Cable,
   Radio,
-  Activity,
   Search,
   Plus,
 } from "lucide-react-native";
@@ -40,7 +39,7 @@ export const InventoryScreen = () => {
 
   const [inventory, setInventory] = useState<InventoryItem[]>([
     {
-      name: "Router",
+      name: "WiFi Router",
       total: 120,
       used: 85,
       color: "#2563EB",
@@ -48,7 +47,7 @@ export const InventoryScreen = () => {
       category: "Router",
     },
     {
-      name: "IPTV",
+      name: "IPTV Box",
       total: 80,
       used: 30,
       color: "#10B981",
@@ -56,7 +55,7 @@ export const InventoryScreen = () => {
       category: "IPTV",
     },
     {
-      name: "Wire (50m)",
+      name: "Fiber Wire (50m)",
       total: 500,
       used: 320,
       color: "#F59E0B",
@@ -82,8 +81,6 @@ export const InventoryScreen = () => {
     return "#10B981";
   };
 
-  /* ================= ADD STOCK LOGIC ================= */
-
   const handleAddStock = (item: any) => {
     const newItem: InventoryItem = {
       name: item.name,
@@ -91,11 +88,7 @@ export const InventoryScreen = () => {
       used: 0,
       color: item.color,
       icon: Wifi,
-      category: item.name.includes("IPTV")
-        ? "IPTV"
-        : item.name.includes("Wire")
-        ? "Wire"
-        : "Router",
+      category: "Router",
     };
 
     setInventory((prev) => [newItem, ...prev]);
@@ -110,45 +103,49 @@ export const InventoryScreen = () => {
     <View style={styles.container}>
       <CurvedHeader title="Inventory Control Center" />
 
-      {/* SEARCH */}
-      <View style={styles.searchBox}>
-        <Search color="#94A3B8" size={18} />
-        <TextInput
-          placeholder="Search stock..."
-          placeholderTextColor="#94A3B8"
-          style={styles.input}
-        />
-      </View>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* ================= SEARCH ================= */}
+        <View style={styles.searchBox}>
+          <Search color="#94A3B8" size={18} />
+          <TextInput
+            placeholder="Search inventory..."
+            placeholderTextColor="#94A3B8"
+            style={styles.input}
+          />
+        </View>
 
-      {/* FILTER */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {categories.map((item) => {
-          const active = selected === item;
+        {/* ================= FILTER ================= */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterRow}
+        >
+          {categories.map((item) => {
+            const active = selected === item;
 
-          return (
-            <TouchableOpacity
-              key={item}
-              onPress={() => setSelected(item)}
-              style={[
-                styles.filterChip,
-                active && styles.filterChipActive,
-              ]}
-            >
-              <Text
+            return (
+              <TouchableOpacity
+                key={item}
+                onPress={() => setSelected(item)}
                 style={[
-                  styles.filterText,
-                  active && { color: "#fff" },
+                  styles.filterChip,
+                  active && styles.filterChipActive,
                 ]}
               >
-                {item}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+                <Text
+                  style={[
+                    styles.filterText,
+                    active && { color: "#fff" },
+                  ]}
+                >
+                  {item}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
 
-      {/* LIST */}
-      <ScrollView>
+        {/* ================= CARDS ================= */}
         {filtered.map((item, index) => {
           const Icon = item.icon;
           const percent = (item.used / item.total) * 100;
@@ -157,29 +154,61 @@ export const InventoryScreen = () => {
 
           return (
             <View key={index} style={styles.card}>
+              {/* HEADER */}
               <View style={styles.headerRow}>
-                <View style={styles.iconWrap}>
-                  <Icon size={18} color={item.color} />
+                <View
+                  style={[
+                    styles.iconWrap,
+                    { backgroundColor: item.color + "20" },
+                  ]}
+                >
+                  <Icon size={20} color={item.color} />
                 </View>
 
                 <View style={{ flex: 1 }}>
                   <Text style={styles.title}>{item.name}</Text>
                   <Text style={styles.sub}>
-                    Stock Intelligence Overview
+                    Stock Overview & Consumption
                   </Text>
                 </View>
 
-                <Text style={[styles.badgeText, { color: statusColor }]}>
+                <Text
+                  style={[
+                    styles.percent,
+                    { color: statusColor },
+                  ]}
+                >
                   {percent.toFixed(0)}%
                 </Text>
               </View>
 
+              {/* METRICS */}
               <View style={styles.metrics}>
-                <Text>Total: {item.total}</Text>
-                <Text>Used: {item.used}</Text>
-                <Text>Remaining: {remaining}</Text>
+                <View style={styles.metricBox}>
+                  <Text style={styles.metricLabel}>Total</Text>
+                  <Text style={styles.metricValue}>
+                    {item.total}
+                  </Text>
+                </View>
+
+                <View style={styles.metricBox}>
+                  <Text style={styles.metricLabel}>Used</Text>
+                  <Text style={styles.metricValue}>
+                    {item.used}
+                  </Text>
+                </View>
+
+                <View style={styles.metricBox}>
+                  <Text style={styles.metricLabel}>
+                    Remaining
+                  </Text>
+                  <Text style={styles.metricValue}>
+                    {remaining}
+                  </Text>
+                </View>
               </View>
 
+              {/* PROGRESS */}
               <View style={styles.progressBg}>
                 <View
                   style={[
@@ -194,17 +223,19 @@ export const InventoryScreen = () => {
             </View>
           );
         })}
+
+        <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* FLOAT BUTTON */}
+      {/* ================= FAB ================= */}
       <TouchableOpacity
         style={styles.fab}
         onPress={() => setModalVisible(true)}
       >
-        <Plus color="#fff" size={20} />
+        <Plus color="#fff" size={22} />
       </TouchableOpacity>
 
-      {/* MODAL */}
+      {/* ================= MODAL ================= */}
       <AddStockModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
@@ -214,7 +245,6 @@ export const InventoryScreen = () => {
   );
 };
 
-/* ================= STYLES ================= */
 
 const styles = StyleSheet.create({
   container: {
@@ -227,8 +257,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     margin: 12,
     paddingHorizontal: 12,
-    height: 44,
-    borderRadius: 12,
+    height: 46,
+    borderRadius: 14,
     backgroundColor: "#fff",
     borderWidth: 1,
     borderColor: "#E2E8F0",
@@ -236,19 +266,19 @@ const styles = StyleSheet.create({
 
   input: {
     flex: 1,
-    marginLeft: 8,
+    marginLeft: 10,
     fontSize: 14,
     color: "#0F172A",
   },
 
   filterRow: {
     paddingHorizontal: 12,
-    marginBottom: 10,
+    paddingBottom: 10,
   },
 
   filterChip: {
     paddingVertical: 8,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     borderRadius: 20,
     backgroundColor: "#E2E8F0",
     marginRight: 8,
@@ -267,9 +297,9 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: "#fff",
     marginHorizontal: 12,
-    marginBottom: 12,
-    borderRadius: 16,
-    padding: 14,
+    marginBottom: 14,
+    borderRadius: 18,
+    padding: 16,
     borderWidth: 1,
     borderColor: "#EEF2F7",
   },
@@ -277,22 +307,21 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 14,
   },
 
   iconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: "#F1F5F9",
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 10,
   },
 
   title: {
-    fontSize: 15,
-    fontWeight: "700",
+    fontSize: 16,
+    fontWeight: "800",
     color: "#0F172A",
   },
 
@@ -302,15 +331,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  badge: {
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 20,
-  },
-
-  badgeText: {
-    fontSize: 11,
-    fontWeight: "700",
+  percent: {
+    fontSize: 13,
+    fontWeight: "800",
   },
 
   metrics: {
@@ -321,6 +344,7 @@ const styles = StyleSheet.create({
 
   metricBox: {
     flex: 1,
+    alignItems: "center",
   },
 
   metricLabel: {
@@ -329,14 +353,14 @@ const styles = StyleSheet.create({
   },
 
   metricValue: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "800",
     color: "#0F172A",
-    marginTop: 2,
+    marginTop: 4,
   },
 
   progressBg: {
-    height: 6,
+    height: 7,
     backgroundColor: "#E2E8F0",
     borderRadius: 20,
     overflow: "hidden",
@@ -347,19 +371,13 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
 
-  footerText: {
-    fontSize: 11,
-    color: "#64748B",
-    marginTop: 8,
-  },
-
   fab: {
     position: "absolute",
     right: 18,
     bottom: 18,
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: "#2563EB",
     justifyContent: "center",
     alignItems: "center",

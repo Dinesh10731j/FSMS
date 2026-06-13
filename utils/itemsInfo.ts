@@ -1,3 +1,12 @@
+
+import {
+  Send,
+  ChevronDown,
+  Wifi,
+  Tv,
+  Cable,
+  Router,
+}  from "lucide-react-native";
 export const wireUsage = [
   {
     value: 50,
@@ -85,4 +94,31 @@ export const iptvUsage = [
     value: 6,
     label: "Jun 7",
   },
+];
+
+
+
+
+export const DATA: Record<string, string[]> = {
+  Router: ["Single Band", "Dual Band", "REF"],
+  IPTV: ["IPTV", "IPTV REF"],
+  Wire: ["50M", "75M", "100M", "175M", "200M", "250M", "300M"],
+};
+
+/* icon mapping */
+export const CATEGORY_ICON: any = {
+  Router: Wifi,
+  IPTV: Tv,
+  Wire: Cable,
+};
+
+
+
+
+export const CONSUMPTION_TYPES = [
+  "IST",
+  "OST",
+  "Field Visit",
+  "Stock Management",
+  "Wire Management",
 ];

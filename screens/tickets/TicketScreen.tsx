@@ -25,6 +25,7 @@ import {
   Cable,
   X,
 } from "lucide-react-native";
+import CurvedHeader from "../../components/ui/CurvedHeader";
 
 /* -------------------- CATEGORY CONFIG -------------------- */
 
@@ -116,15 +117,7 @@ export const TicketScreen = () => {
   return (
     <View style={styles.container}>
 
-      {/* HEADER */}
-      <View style={styles.header}>
-        <Ticket color="#fff" size={22} />
-        <Text style={styles.headerTitle}>Create Ticket</Text>
-        <Text style={styles.headerSub}>
-          FSM Support System
-        </Text>
-      </View>
-
+    <CurvedHeader title="Create a Ticket"/>
       <ScrollView style={styles.form}>
 
         <View style={styles.card}>
@@ -171,14 +164,6 @@ export const TicketScreen = () => {
           {errors.category && (
             <Text style={styles.error}>{errors.category}</Text>
           )}
-
-          {/* CCNS */}
-          <Input
-            label="CCNS"
-            placeholder="Enter CCNS"
-            value={ccns}
-            onChangeText={setCcns}
-          />
 
           {/* DESCRIPTION */}
           <Input
